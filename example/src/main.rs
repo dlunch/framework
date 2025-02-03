@@ -161,7 +161,6 @@ struct EmployeeReadModel {
 }
 
 impl ReadModel for EmployeeReadModel {
-    type Store = ReadModelStoreImpl;
     type Event = EmployeeEvent;
 
     fn apply_event(&mut self, event: &Self::Event) -> Result<()> {
@@ -190,7 +189,7 @@ struct EmployeeQuery {
 }
 
 impl Query for EmployeeQuery {
-    type ReadModel = EmployeeReadModel;
+    type ReadModelStore = ReadModelStoreImpl;
     type Handler = EmployeeQueryHandler;
     type Output = Option<EmployeeReadModel>;
 }
@@ -199,13 +198,10 @@ struct EmployeeQueryHandler;
 
 #[async_trait::async_trait]
 impl QueryHandler<EmployeeQuery> for EmployeeQueryHandler {
-    async fn handle<S>(
-        read_model_store: &S,
+    async fn handle(
+        read_model_store: &ReadModelStoreImpl,
         query: EmployeeQuery,
-    ) -> framework::Result<Option<EmployeeReadModel>>
-    where
-        S: framework::ReadModelStore<ReadModel = EmployeeReadModel>,
-    {
+    ) -> framework::Result<Option<EmployeeReadModel>> {
         Ok(read_model_store.read(query.id).await?)
     }
 }

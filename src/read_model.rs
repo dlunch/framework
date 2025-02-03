@@ -7,7 +7,6 @@ pub trait ReadModel: Sync + Send + Default
 where
     Self: Sized + 'static,
 {
-    type Store: ReadModelStore<ReadModel = Self>;
     type Event: Event;
 
     fn apply_event(&mut self, event: &Self::Event) -> Result<()>;
@@ -16,13 +15,6 @@ where
 #[async_trait::async_trait]
 pub trait ReadModelStore: Sync + Send + AsAny {
     type ReadModel: ReadModel;
-
-    fn read_model_type() -> TypeId
-    where
-        Self: Sized,
-    {
-        TypeId::of::<Self::ReadModel>()
-    }
 
     fn read_model_event_type() -> TypeId
     where
@@ -77,19 +69,20 @@ where
 }
 
 pub trait ReadModelStores: Sync + Send {
-    fn store_for_read_model<R>(&self) -> Option<&R::Store>
+    fn find<S>(&self) -> Option<&S>
     where
-        R: ReadModel + 'static;
+        S: ReadModelStore + 'static;
 
     fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
     where
         E: Event + 'static;
 }
 
+// TODO macro..
 impl ReadModelStores for () {
-    fn store_for_read_model<R>(&self) -> Option<&R::Store>
+    fn find<S>(&self) -> Option<&S>
     where
-        R: ReadModel + 'static,
+        S: ReadModelStore + 'static,
     {
         None
     }
@@ -106,12 +99,12 @@ impl<S1> ReadModelStores for (S1,)
 where
     S1: ReadModelStore + 'static,
 {
-    fn store_for_read_model<R>(&self) -> Option<&R::Store>
+    fn find<S>(&self) -> Option<&S>
     where
-        R: ReadModel + 'static,
+        S: ReadModelStore + 'static,
     {
-        if TypeId::of::<R>() == S1::read_model_type() {
-            self.0.to_concrete::<R::Store>()
+        if TypeId::of::<S>() == TypeId::of::<S1>() {
+            self.0.to_concrete::<S>()
         } else {
             None
         }
@@ -134,14 +127,14 @@ where
     S1: ReadModelStore + 'static,
     S2: ReadModelStore + 'static,
 {
-    fn store_for_read_model<R>(&self) -> Option<&R::Store>
+    fn find<S>(&self) -> Option<&S>
     where
-        R: ReadModel + 'static,
+        S: ReadModelStore + 'static,
     {
-        if TypeId::of::<R>() == S1::read_model_type() {
-            self.0.to_concrete::<R::Store>()
-        } else if TypeId::of::<R>() == S2::read_model_type() {
-            self.1.to_concrete::<R::Store>()
+        if TypeId::of::<S>() == TypeId::of::<S1>() {
+            self.0.to_concrete::<S>()
+        } else if TypeId::of::<S>() == TypeId::of::<S2>() {
+            self.1.to_concrete::<S>()
         } else {
             None
         }
@@ -171,16 +164,16 @@ where
     S2: ReadModelStore + 'static,
     S3: ReadModelStore + 'static,
 {
-    fn store_for_read_model<R>(&self) -> Option<&R::Store>
+    fn find<S>(&self) -> Option<&S>
     where
-        R: ReadModel + 'static,
+        S: ReadModelStore + 'static,
     {
-        if TypeId::of::<R>() == S1::read_model_type() {
-            self.0.to_concrete::<R::Store>()
-        } else if TypeId::of::<R>() == S2::read_model_type() {
-            self.1.to_concrete::<R::Store>()
-        } else if TypeId::of::<R>() == S3::read_model_type() {
-            self.2.to_concrete::<R::Store>()
+        if TypeId::of::<S>() == TypeId::of::<S1>() {
+            self.0.to_concrete::<S>()
+        } else if TypeId::of::<S>() == TypeId::of::<S2>() {
+            self.1.to_concrete::<S>()
+        } else if TypeId::of::<S>() == TypeId::of::<S3>() {
+            self.2.to_concrete::<S>()
         } else {
             None
         }
@@ -207,5 +200,3 @@ where
         updaters
     }
 }
-
-// TODO macro..

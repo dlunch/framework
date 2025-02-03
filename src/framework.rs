@@ -63,9 +63,7 @@ where
     where
         Q: Query + 'static,
     {
-        let store = self
-            .read_model_stores
-            .store_for_read_model::<Q::ReadModel>();
+        let store = self.read_model_stores.find::<Q::ReadModelStore>();
 
         let Some(store) = store else {
             return Err(FrameworkError::NoSuchReadModelStore);
