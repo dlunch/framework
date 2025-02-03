@@ -38,7 +38,7 @@ where
         }
     }
 
-    pub async fn execute<C>(&self, command: C) -> Result<()>
+    pub async fn command<C>(&self, command: C) -> Result<()>
     where
         C: Command,
     {

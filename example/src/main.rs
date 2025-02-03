@@ -288,7 +288,7 @@ pub async fn main() -> Result<()> {
     });
 
     framework
-        .execute(EmployeeCommand::CreateEmployee {
+        .command(EmployeeCommand::CreateEmployee {
             id: 1,
             name: "test".into(),
             address: "address".into(),
@@ -299,7 +299,7 @@ pub async fn main() -> Result<()> {
     println!("{:?}", employee);
 
     framework
-        .execute(EmployeeCommand::ChangeName {
+        .command(EmployeeCommand::ChangeName {
             id: 1,
             name: "new name".into(),
         })
@@ -309,7 +309,7 @@ pub async fn main() -> Result<()> {
     println!("{:?}", employee);
 
     framework
-        .execute(EmployeeCommand::ChangeAddress {
+        .command(EmployeeCommand::ChangeAddress {
             id: 1,
             address: "new address".into(),
         })
