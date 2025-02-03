@@ -201,7 +201,7 @@ impl QueryHandler<EmployeeQuery> for EmployeeQueryHandler {
     async fn handle(
         read_model_store: &ReadModelStoreImpl,
         query: EmployeeQuery,
-    ) -> framework::Result<Option<EmployeeReadModel>> {
+    ) -> Result<Option<EmployeeReadModel>> {
         Ok(read_model_store.read(query.id).await?)
     }
 }

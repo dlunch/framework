@@ -2,7 +2,7 @@ use crate::{
     aggregate::Aggregate,
     command::Command,
     error::FrameworkError,
-    event::{EventStore, EventTypeId},
+    event::{Event, EventStore, EventTypeId},
     event_listener::EventListener,
     query::{Query, QueryHandler},
     read_model::ReadModelStores,
@@ -74,7 +74,7 @@ where
 
     pub fn register_event_callback<F>(&mut self, event_type_id: EventTypeId, callback: F)
     where
-        F: Fn(&dyn crate::Event) -> Result<()> + Send + Sync + 'static,
+        F: Fn(&dyn Event) -> Result<()> + Send + Sync + 'static,
     {
         self.event_listener
             .register_callback(event_type_id, callback)
