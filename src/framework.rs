@@ -59,11 +59,13 @@ where
         Ok(())
     }
 
-    pub async fn query<Q>(&self, query: Q) -> Result<Q::Output>
+    pub async fn query<Q>(&self, query: Q) -> Result<<Q::Handler as QueryHandler<Q>>::Output>
     where
         Q: Query + 'static,
     {
-        let store = self.read_model_stores.find::<Q::ReadModelStore>();
+        let store = self
+            .read_model_stores
+            .find::<<Q::Handler as QueryHandler<Q>>::ReadModelStore>();
 
         let Some(store) = store else {
             return Err(FrameworkError::NoSuchReadModelStore);

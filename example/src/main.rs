@@ -189,14 +189,14 @@ struct EmployeeQuery {
 }
 
 impl Query for EmployeeQuery {
-    type ReadModelStore = ReadModelStoreImpl;
     type Handler = EmployeeQueryHandler;
-    type Output = Option<EmployeeReadModel>;
 }
 
 struct EmployeeQueryHandler;
 
 impl QueryHandler<EmployeeQuery> for EmployeeQueryHandler {
+    type ReadModelStore = ReadModelStoreImpl;
+    type Output = Option<EmployeeReadModel>;
     async fn handle(
         read_model_store: &ReadModelStoreImpl,
         query: EmployeeQuery,
