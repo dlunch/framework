@@ -1,17 +1,19 @@
-use alloc::boxed::Box;
+use core::future::Future;
 
 use crate::{read_model::ReadModelStore, Result};
 
-pub trait Query: Sync + Send {
+pub trait Query {
     type ReadModelStore: ReadModelStore + 'static;
     type Handler: QueryHandler<Self>;
     type Output;
 }
 
-#[async_trait::async_trait]
-pub trait QueryHandler<Q>: Sync + Send
+pub trait QueryHandler<Q>
 where
     Q: Query + ?Sized,
 {
-    async fn handle(read_model_store: &Q::ReadModelStore, query: Q) -> Result<Q::Output>;
+    fn handle(
+        read_model_store: &Q::ReadModelStore,
+        query: Q,
+    ) -> impl Future<Output = Result<Q::Output>> + Send;
 }

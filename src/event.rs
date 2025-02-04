@@ -1,4 +1,5 @@
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
+use core::future::Future;
 
 use crate::{aggregate::Aggregate, as_any::AsAny, Result};
 
@@ -9,13 +10,20 @@ pub trait Event: AsAny + Sync + Send {
     fn version(&self) -> u32;
 }
 
-#[async_trait::async_trait]
-pub trait EventStore: Sync + Send {
-    async fn read<A>(&self, aggregate_id: u64, from_version: u32) -> Result<Vec<A::Event>>
+pub trait EventStore {
+    fn read<A>(
+        &self,
+        aggregate_id: u64,
+        from_version: u32,
+    ) -> impl Future<Output = Result<Vec<A::Event>>> + Send
     where
         A: Aggregate;
 
-    async fn save<A>(&self, aggregate_id: u64, events: &[A::Event]) -> Result<()>
+    fn save<A>(
+        &self,
+        aggregate_id: u64,
+        events: &[A::Event],
+    ) -> impl Future<Output = Result<()>> + Send
     where
         A: Aggregate;
 }

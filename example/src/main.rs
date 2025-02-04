@@ -196,13 +196,12 @@ impl Query for EmployeeQuery {
 
 struct EmployeeQueryHandler;
 
-#[async_trait::async_trait]
 impl QueryHandler<EmployeeQuery> for EmployeeQueryHandler {
     async fn handle(
         read_model_store: &ReadModelStoreImpl,
         query: EmployeeQuery,
     ) -> Result<Option<EmployeeReadModel>> {
-        Ok(read_model_store.read(query.id).await?)
+        read_model_store.read(query.id).await
     }
 }
 
@@ -211,7 +210,6 @@ struct ReadModelStoreImpl {
     employees: Mutex<HashMap<u64, EmployeeReadModel>>,
 }
 
-#[async_trait::async_trait]
 impl ReadModelStore for ReadModelStoreImpl {
     type ReadModel = EmployeeReadModel;
 
@@ -234,7 +232,6 @@ struct EventStoreImpl {
     events: Mutex<HashMap<u64, Vec<Value>>>,
 }
 
-#[async_trait::async_trait]
 impl EventStore for EventStoreImpl {
     async fn read<A>(&self, aggregate_id: u64, from_version: u32) -> Result<Vec<A::Event>>
     where

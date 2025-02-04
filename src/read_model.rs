@@ -1,5 +1,5 @@
 use alloc::{boxed::Box, vec, vec::Vec};
-use core::any::TypeId;
+use core::{any::TypeId, future::Future};
 
 use crate::{as_any::AsAny, event::Event, Result};
 
@@ -12,7 +12,6 @@ where
     fn apply_event(&mut self, event: &Self::Event) -> Result<()>;
 }
 
-#[async_trait::async_trait]
 pub trait ReadModelStore: Sync + Send + AsAny {
     type ReadModel: ReadModel;
 
@@ -31,12 +30,16 @@ pub trait ReadModelStore: Sync + Send + AsAny {
         self.as_any().downcast_ref()
     }
 
-    async fn read(&self, id: u64) -> Result<Option<Self::ReadModel>>;
-    async fn save(&self, id: u64, read_model: &Self::ReadModel) -> Result<()>;
+    fn read(&self, id: u64) -> impl Future<Output = Result<Option<Self::ReadModel>>> + Send;
+    fn save(
+        &self,
+        id: u64,
+        read_model: &Self::ReadModel,
+    ) -> impl Future<Output = Result<()>> + Send;
 }
 
 #[async_trait::async_trait]
-pub trait ReadModelUpdater: Sync + Send {
+pub trait ReadModelUpdater {
     async fn update(&self, id: u64, event: &[Box<dyn Event>]) -> Result<()>;
 }
 
@@ -68,7 +71,7 @@ where
     }
 }
 
-pub trait ReadModelStores: Sync + Send {
+pub trait ReadModelStores {
     fn find<S>(&self) -> Option<&S>
     where
         S: ReadModelStore + 'static;

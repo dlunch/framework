@@ -1,20 +1,18 @@
-use alloc::boxed::Box;
+use core::future::Future;
 
 use crate::{aggregate::Aggregate, Result};
 
-#[async_trait::async_trait]
-pub trait SnapshotStore: Sync + Send {
-    async fn read<A>(&self, aggregate_id: u64) -> Result<Option<A>>
+pub trait SnapshotStore {
+    fn read<A>(&self, aggregate_id: u64) -> impl Future<Output = Result<Option<A>>> + Send
     where
         A: Aggregate;
-    async fn save<A>(&self, aggregate: &A) -> Result<()>
+    fn save<A>(&self, aggregate: &A) -> impl Future<Output = Result<()>> + Send
     where
         A: Aggregate;
 }
 
 pub struct DummySnapshotStore;
 
-#[async_trait::async_trait]
 impl SnapshotStore for DummySnapshotStore {
     async fn read<A>(&self, _aggregate_id: u64) -> Result<Option<A>>
     where
