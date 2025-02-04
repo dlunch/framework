@@ -31,22 +31,14 @@ impl EventListener {
         A: Aggregate + 'static,
         R: ReadModelStores,
     {
-        let boxed_events = events
-            .into_iter()
-            .map(|e| Box::new(e) as Box<dyn Event>)
-            .collect::<Vec<_>>();
-
-        // 1. update read model
-        let updaters = read_model_stores.updater_for_event::<A::Event>();
-
-        for updater in &updaters {
-            updater.update(aggregate_id, &boxed_events).await?;
-        }
+        read_model_stores
+            .update_read_model(aggregate_id, &events)
+            .await?;
 
         // 2. dispatch callbacks
-        for e in &boxed_events {
+        for e in &events {
             if let Some(callback) = self.callbacks.get(&e.type_id()) {
-                callback(e.as_ref())?;
+                callback(e)?;
             }
         }
 

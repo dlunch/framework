@@ -5,7 +5,7 @@ use crate::{aggregate::Aggregate, as_any::AsAny, Result};
 
 pub type EventTypeId = u32;
 
-pub trait Event: AsAny + Sync + Send {
+pub trait Event: Sync + Send + AsAny {
     fn type_id(&self) -> EventTypeId;
     fn version(&self) -> u32;
 }

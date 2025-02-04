@@ -1,4 +1,3 @@
-use alloc::{boxed::Box, vec, vec::Vec};
 use core::{any::TypeId, future::Future};
 
 use crate::{as_any::AsAny, event::Event, Result};
@@ -30,6 +29,27 @@ pub trait ReadModelStore: Sync + Send + AsAny {
         self.as_any().downcast_ref()
     }
 
+    fn update_read_model<E>(&self, id: u64, events: &[E]) -> impl Future<Output = Result<()>> + Send
+    where
+        E: Event + 'static,
+    {
+        async move {
+            let mut read_model = self.read(id).await?.unwrap_or_default();
+
+            for e in events {
+                let e = e
+                    .as_any()
+                    .downcast_ref::<<Self::ReadModel as ReadModel>::Event>()
+                    .unwrap();
+                read_model.apply_event(e)?;
+            }
+
+            self.save(id, &read_model).await?;
+
+            Ok(())
+        }
+    }
+
     fn read(&self, id: u64) -> impl Future<Output = Result<Option<Self::ReadModel>>> + Send;
     fn save(
         &self,
@@ -38,45 +58,16 @@ pub trait ReadModelStore: Sync + Send + AsAny {
     ) -> impl Future<Output = Result<()>> + Send;
 }
 
-#[async_trait::async_trait]
-pub trait ReadModelUpdater {
-    async fn update(&self, id: u64, event: &[Box<dyn Event>]) -> Result<()>;
-}
-
-struct ReadModelUpdaterImpl<'a, S>(&'a S)
-where
-    S: ReadModelStore;
-
-#[async_trait::async_trait]
-impl<S> ReadModelUpdater for ReadModelUpdaterImpl<'_, S>
-where
-    S: ReadModelStore,
-{
-    // TODO is there any way to avoid type erasure?
-    async fn update(&self, id: u64, event: &[Box<dyn Event>]) -> Result<()> {
-        let mut read_model = self.0.read(id).await?.unwrap_or_default();
-
-        for e in event {
-            let e = e
-                .as_ref()
-                .as_any()
-                .downcast_ref::<<S::ReadModel as ReadModel>::Event>()
-                .unwrap();
-            read_model.apply_event(e)?;
-        }
-
-        self.0.save(id, &read_model).await?;
-
-        Ok(())
-    }
-}
-
 pub trait ReadModelStores {
     fn find<S>(&self) -> Option<&S>
     where
         S: ReadModelStore + 'static;
 
-    fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
+    fn update_read_model<E>(
+        &self,
+        id: u64,
+        events: &[E],
+    ) -> impl Future<Output = Result<()>> + Send
     where
         E: Event + 'static;
 }
@@ -90,11 +81,11 @@ impl ReadModelStores for () {
         None
     }
 
-    fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
+    async fn update_read_model<E>(&self, _id: u64, _events: &[E]) -> Result<()>
     where
         E: Event + 'static,
     {
-        Vec::new()
+        Ok(())
     }
 }
 
@@ -113,15 +104,15 @@ where
         }
     }
 
-    fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
+    async fn update_read_model<E>(&self, id: u64, events: &[E]) -> Result<()>
     where
         E: Event + 'static,
     {
         if TypeId::of::<E>() == S1::read_model_event_type() {
-            vec![Box::new(ReadModelUpdaterImpl(&self.0))]
-        } else {
-            Vec::new()
+            self.0.update_read_model(id, events).await?;
         }
+
+        Ok(())
     }
 }
 
@@ -143,21 +134,18 @@ where
         }
     }
 
-    fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
+    async fn update_read_model<E>(&self, id: u64, events: &[E]) -> Result<()>
     where
         E: Event + 'static,
     {
-        let mut updaters: Vec<Box<dyn ReadModelUpdater + 'a>> = Vec::new();
-
         if TypeId::of::<E>() == S1::read_model_event_type() {
-            updaters.push(Box::new(ReadModelUpdaterImpl(&self.0)));
+            self.0.update_read_model(id, events).await?;
         }
-
         if TypeId::of::<E>() == S2::read_model_event_type() {
-            updaters.push(Box::new(ReadModelUpdaterImpl(&self.1)));
+            self.1.update_read_model(id, events).await?;
         }
 
-        updaters
+        Ok(())
     }
 }
 
@@ -182,24 +170,20 @@ where
         }
     }
 
-    fn updater_for_event<'a, E>(&'a self) -> Vec<Box<dyn ReadModelUpdater + 'a>>
+    async fn update_read_model<E>(&self, id: u64, events: &[E]) -> Result<()>
     where
         E: Event + 'static,
     {
-        let mut updaters: Vec<Box<dyn ReadModelUpdater + 'a>> = Vec::new();
-
         if TypeId::of::<E>() == S1::read_model_event_type() {
-            updaters.push(Box::new(ReadModelUpdaterImpl(&self.0)));
+            self.0.update_read_model(id, events).await?;
         }
-
         if TypeId::of::<E>() == S2::read_model_event_type() {
-            updaters.push(Box::new(ReadModelUpdaterImpl(&self.1)));
+            self.1.update_read_model(id, events).await?;
         }
-
         if TypeId::of::<E>() == S3::read_model_event_type() {
-            updaters.push(Box::new(ReadModelUpdaterImpl(&self.2)));
+            self.2.update_read_model(id, events).await?;
         }
 
-        updaters
+        Ok(())
     }
 }
