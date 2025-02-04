@@ -3,7 +3,6 @@ use alloc::{boxed::Box, collections::BTreeMap, vec::Vec};
 use crate::{
     aggregate::Aggregate,
     event::{Event, EventTypeId},
-    read_model::ReadModelStores,
     Result,
 };
 
@@ -21,21 +20,10 @@ impl EventListener {
         }
     }
 
-    pub async fn handle_events<A, R>(
-        &self,
-        read_model_stores: &R,
-        aggregate_id: u64,
-        events: Vec<A::Event>,
-    ) -> Result<()>
+    pub async fn handle_events<A>(&self, events: Vec<A::Event>) -> Result<()>
     where
         A: Aggregate + 'static,
-        R: ReadModelStores,
     {
-        read_model_stores
-            .update_read_model(aggregate_id, &events)
-            .await?;
-
-        // 2. dispatch callbacks
         for e in &events {
             if let Some(callback) = self.callbacks.get(&e.type_id()) {
                 callback(e)?;

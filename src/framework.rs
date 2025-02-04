@@ -52,8 +52,12 @@ where
 
         repository.save(aggregate_id, &events).await?;
 
+        self.read_model_stores
+            .update_read_model(aggregate_id, &events)
+            .await?;
+
         self.event_listener
-            .handle_events::<C::Aggregate, R>(&self.read_model_stores, aggregate_id, events)
+            .handle_events::<C::Aggregate>(events)
             .await?;
 
         Ok(())
