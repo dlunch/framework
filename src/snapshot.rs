@@ -6,7 +6,7 @@ pub trait SnapshotStore {
     fn read<A>(&self, aggregate_id: u64) -> impl Future<Output = Result<Option<A>>> + Send
     where
         A: Aggregate;
-    fn save<A>(&self, aggregate: &A) -> impl Future<Output = Result<()>> + Send
+    fn save<A>(&self, aggregate_id: u64, aggregate: &A) -> impl Future<Output = Result<()>> + Send
     where
         A: Aggregate;
 }
@@ -21,7 +21,7 @@ impl SnapshotStore for DummySnapshotStore {
         Ok(None)
     }
 
-    async fn save<A>(&self, _aggregate: &A) -> Result<()>
+    async fn save<A>(&self, _aggregate_id: u64, _aggregate: &A) -> Result<()>
     where
         A: Aggregate,
     {

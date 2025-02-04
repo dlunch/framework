@@ -91,10 +91,6 @@ impl Aggregate for EmployeeAggregate {
         1
     }
 
-    fn id(&self) -> u64 {
-        self.id
-    }
-
     fn version(&self) -> u32 {
         self.version
     }

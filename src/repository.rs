@@ -49,7 +49,7 @@ where
 
         // update snapshot
         let aggregate = self.read(aggregate_id).await?;
-        self.snapshot_store.save(&aggregate).await?;
+        self.snapshot_store.save(aggregate_id, &aggregate).await?;
 
         Ok(())
     }
