@@ -7,7 +7,7 @@ use crate::{
     Result,
 };
 
-type BoxedEventCallback = Box<dyn Fn(&dyn Event) -> Result<()>>;
+type BoxedEventCallback = Box<dyn Fn(&dyn Event) -> Result<()> + Sync + Send>;
 
 #[derive(Default)]
 pub struct EventListener {
@@ -47,7 +47,7 @@ impl EventListener {
 
     pub fn register_callback<F>(&mut self, event_type_id: EventTypeId, callback: F)
     where
-        F: Fn(&dyn Event) -> Result<()> + 'static,
+        F: Fn(&dyn Event) -> Result<()> + Sync + Send + 'static,
     {
         self.callbacks.insert(event_type_id, Box::new(callback));
     }
