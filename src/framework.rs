@@ -76,7 +76,7 @@ where
 
     pub fn register_event_callback<F>(&mut self, event_type_id: EventTypeId, callback: F)
     where
-        F: Fn(&dyn Event) -> Result<()> + Send + Sync + 'static,
+        F: Fn(&dyn Event) -> Result<()> + 'static,
     {
         self.event_listener
             .register_callback(event_type_id, callback)
