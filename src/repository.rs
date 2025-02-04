@@ -39,7 +39,7 @@ where
             .read::<A>(aggregate_id, aggregate.version())
             .await?;
 
-        aggregate.apply_events(&events)?;
+        aggregate.apply_events(events)?;
 
         Ok(aggregate)
     }

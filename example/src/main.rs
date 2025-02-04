@@ -118,7 +118,7 @@ impl Aggregate for EmployeeAggregate {
         }
     }
 
-    fn apply_events(&mut self, events: &[Self::Event]) -> Result<()> {
+    fn apply_events(&mut self, events: Vec<Self::Event>) -> Result<()> {
         for event in events {
             match event {
                 EmployeeEvent::EmployeeCreated {
@@ -127,20 +127,20 @@ impl Aggregate for EmployeeAggregate {
                     name,
                     address,
                 } => {
-                    self.version = *version;
-                    self.id = *id;
-                    self.name = name.clone();
-                    self.address = address.clone();
+                    self.version = version;
+                    self.id = id;
+                    self.name = name;
+                    self.address = address;
                 }
                 EmployeeEvent::NameChanged { version, name, .. } => {
-                    self.version = *version;
-                    self.name = name.clone();
+                    self.version = version;
+                    self.name = name;
                 }
                 EmployeeEvent::AddressChanged {
                     version, address, ..
                 } => {
-                    self.version = *version;
-                    self.address = address.clone();
+                    self.version = version;
+                    self.address = address;
                 }
             }
         }
